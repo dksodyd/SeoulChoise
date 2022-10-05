@@ -29,7 +29,7 @@
   <li>백엔드 : Spring Boot, mybatis, JSP, JSTL, EL </li>
 
 <h2>DB설계- ERD </h4>
-<img src="https://github.com/SijinAn/SeoulChoise-NewChallenge/blob/master/NC.png?raw=true"/>
+<img src="https://github.com/SijinAn/SeoulChoise/blob/main/SeoulChoise-NewChallenge/NC.png/>
 
 <h2>파트 분담</h2>
 
