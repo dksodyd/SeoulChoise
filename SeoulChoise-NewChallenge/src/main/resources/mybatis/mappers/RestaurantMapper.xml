@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="kr.co.nc.mapper.RestaurantMapper">
+
+	<!-- userMapper가 만들어지는대로 association 등록하기-->
+	<resultMap type="Review" id="ReviewResultMap">
+		<id column="REVIEW_NO" property="no"/>
+		<result column="ACCO_ID" property="accoId"/>
+		<result column="REVIEW_TITLE" property="title"/>
+		<result column="REVIEW_CONTENT" property="content"/>
+		<result column="REVIEW_LIKE_COUNT" property="likeCount"/>
+		<result column="REVIEW_CREATED_DATE" property="createdDate"/>
+		<result column="REVIEW_UPDATED_DATE" property="updatedDate"/>
+		<result column="REVIEW_DELETED" property="deleted"/>
+		<result column="REVIEW_IMAGE" property="image"/>
+		<result column="REVIEW_POINT" property="point"/>
+		<association property="user" column="user_no" select="kr.co.nc.mapper.UserMapper.getUserByNo"></association>
+		<association property="user" column="user_name" select="kr.co.nc.mapper.UserMapper.getUserByNo"></association>
+		<association property="restaurant" column="RESTAURANT_NO" select="kr.co.nc.mapper.RestaurantMapper.getRestaurantByNo"></association>
+		<!-- <association property="user" column="user_no"></association> -->
+	</resultMap>
+	
+	<resultMap type="Restaurant" id="RestaurantResultMap">
+		<id column="RESTAURANT_NO" property="no"/>
+		<result column="RESTAURANT_NAME" property="name"/>
+		<result column="RESTAURANT_LOCATION" property="location"/>
+		<result column="RESTAURANT_IMGNAME" property="imgname"/>
+		<result column="RESTAURANT_TEL" property="tel"/>
+		<result column="RESTAURANT_LIKE_COUNT" property="likeCount"/>
+		<result column="RESTAURANT_REVIEW_COUNT" property="reviewCount"/>
+		<result column="RESTAURANT_REVIEW_POINT" property="reviewPoint"/>
+		<result column="RESTAURANT_CREATED_DATE" property="createdDate"/>
+		<result column="RESTAURANT_UPDATE_DATE" property="updateDate"/>
+		<result column="RESTAURANT_LATITUD" property="latitud"/>
+		<result column="RESTAURANT_LONGITUDE" property="longitude"/>
+		<result column="RESTAURANT_DELETE" property="delete"/>
+		<result column="CITY_ID" property="cityId"/>
+		<result column="RESTAURANT_OPENING" property="opening"/>
+		<result column="RESTAURANT_BREAK_TIME" property="breakTime"/>
+		<result column="RESTAURANT_CLOSE" property="close"/>
+		<result column="RESTAURANT_DISTRICT" property="district"/>
+		<collection column="RESTAURANT_NO" property="menus" select="getRestaurantMenusByRestaurantNo"></collection>
+	</resultMap>
+	
+	<!-- List<RestaurantMenu> getRestaurantMenusByRestaurantNo(int restaurantNo); -->
+	<select id="getRestaurantMenusByRestaurantNo" parameterType="int" resultType="RestaurantMenu">
+		select RESTAURANT_NO as restaurantNo, RESTAURANT_MENU_NAME as menuName, RESTAURANT_PRICE as price
+		from RESTAURANT_MENU
+		where RESTAURANT_NO = #{value}
+	</select>
+	
+	<!-- List<RestaurantTag> getRestaurantTagsByRestaurantNo(int restaurantNo);-->
+	<select id="getRestaurantTagsByRestaurantNo" parameterType="int" resultType="RestaurantTag">
+		select RESTAURANT_NO as restaurantNo, RESTAURANT_TAG as tag
+		from RESTAURANT_TAG
+		where RESTAURANT_NO = #{value}
+	</select>
+	
+	<!-- List<RestaurantCategory> getRestaurantCategoriesByRestaurantNo(int restaurantNo); -->
+	<select id="getRestaurantCategoriesByRestaurantNo" parameterType="int" resultType="RestaurantCategory">
+		select A.RESTAURANT_NO as restaurantNo,
+				A.RESTAURANT_CAT_ID as "category.id",
+				B.RESTAURANT_CAT_NAME as "category.name"
+		from RESTAURANT_CAT A,RESTAURANT_CAT_NAME B
+		where A.RESTAURANT_NO = #{value}
+		and A.RESTAURANT_CAT_ID = B.RESTAURANT_CAT_ID
+		
+	</select>
+	<!--Restaurant의 있는 정보 싹다 가져오는 resultMap 디테일 출력시 이용 -->
+	<resultMap type="Restaurant" id="RestaurantDetailResultMap" extends="RestaurantResultMap">
+		<collection property="tags" column="restaurant_no" select="kr.co.nc.mapper.RestaurantMapper.getRestaurantTagsByRestaurantNo"></collection>
+		<collection property="categories" column="restaurant_no" select="kr.co.nc.mapper.RestaurantMapper.getRestaurantCategoriesByRestaurantNo"></collection>
+	</resultMap>
+	
+	<!-- Restaurant getRestaurantByNo(int restaurantNo); -->
+	<select id="getRestaurantByNo" parameterType="int" resultMap="RestaurantDetailResultMap">
+		select *
+		from RESTAURANT
+		where RESTAURANT_NO = #{value}
+	</select>
+	
+	<!-- List<String> getAllTags(); -->
+	<select id="getAllTags" resultType="string">
+		select distinct RESTAURANT_TAG
+		from RESTAURANT_TAG
+	</select>
+	
+	<!-- List<Category> getAllCategories(); -->
+	<select id="getAllCategories" resultType="Category">
+		select RESTAURANT_CAT_ID as id, RESTAURANT_CAT_NAME as name
+		from RESTAURANT_CAT_NAME
+		order by RESTAURANT_CAT_ID asc
+	</select>
+	
+	<!-- List<City> getAllCities(); -->
+	<select id="getAllCities" resultType="kr.co.nc.vo.City">
+		select city_id as id, city_name as name, city_latitude as latitude, city_longitude as longitude
+		from cities
+		order by city_id
+	</select>
+	
+	<!-- List<Review> getAllReview(); -->
+	<select id="getAllReview" resultMap="ReviewResultMap">
+		select *
+		from REVIEW
+		where
+			ACCO_ID is NULL and REVIEW_DELETED = 'N'
+			and RESTAURANT_NO = #{value}
+		order by
+			REVIEW_CREATED_DATE desc
+	</select>
+	
+	<!-- List<Restaurant> getRestaurantsByCategoryId(@Param("categoryId") String categoryId); -->
+	<select id="getRestaurantsByCategoryId" parameterType="string" resultType="kr.co.nc.vo.Restaurant" >
+		select
+			RESTAURANT_NO as no,
+			RESTAURANT_NAME as name,
+			RESTAURANT_LOCATION as location,
+			RESTAURANT_IMGNAME as imgName,
+			RESTAURANT_TEL as tel,
+			RESTAURANT_LIKE_COUNT as likeCount,
+			RESTAURANT_REVIEW_COUNT as reviewCount,
+			RESTAURANT_REVIEW_POINT as reviewPoint,
+			RESTAURANT_CREATED_DATE as createdDate,
+			RESTAURANT_UPDATE_DATE as updatedDate,
+			RESTAURANT_LATITUD as latitud,
+			RESTAURANT_LONGITUDE as longitude,
+			CITY_ID as "CITIES.CITY_ID",
+			RESTAURANT_OPENING as opening,
+			RESTAURANT_BREAK_TIME as breakTime,
+			RESTAURANT_CLOSE as close,
+			RESTAURANT_DISTRICT as district
+		from RESTAURANT
+		where
+			RESTAURANT_NO in (select RESTAURANT_NO
+								from RESTAURANT_CAT
+							   where RESTAURANT_CAT_ID = #{categoryId})
+		order by RESTAURANT_CREATED_DATE DESC
+	</select>
+	
+	<!-- List<Restaurant> getRestaurantByCriteria(RestaurantCriteria criteria); -->
+	<select id="getRestaurantByCriteria" parameterType="kr.co.nc.criteria.RestaurantCriteria" resultMap="RestaurantResultMap">
+		select distinct res.RESTAURANT_NO, res.RESTAURANT_NAME, res.RESTAURANT_LOCATION, res.RESTAURANT_IMGNAME,
+				res.RESTAURANT_LIKE_COUNT, res.RESTAURANT_REVIEW_COUNT, res.RESTAURANT_REVIEW_POINT, res.RESTAURANT_LATITUD,
+				res.RESTAURANT_LONGITUDE, res.CITY_ID, res.RESTAURANT_TEL, res.RESTAURANT_DISTRICT,
+				ROUND(DISTANCE_WGS84(#{currentLat}, #{currentLong}, res.RESTAURANT_LATITUD, res.RESTAURANT_LONGITUDE),2) as distance
+		
+		FROM
+		   restaurant res, restaurant_tag rtag, restaurant_menu rmenu, RESTAURANT_CAT rcat, RESTAURANT_CAT_NAME rcatname
+		            
+		<where>
+			res.RESTAURANT_DELETE = 'N'
+			<if test="minLat != null">
+				and res.RESTAURANT_LATITUD >= #{minLat} and res.RESTAURANT_LATITUD &lt; #{maxLat}
+			</if>
+			<if test="minLon != null">
+				and res.RESTAURANT_LONGITUDE >= #{minLon} and res.RESTAURANT_LONGITUDE &lt; #{maxLon}
+			</if>
+			<if test="keyword != null">
+					AND res.restaurant_no = rtag.restaurant_no (+)
+		            AND res.restaurant_no = rmenu.restaurant_no (+)
+                    AND res.restaurant_no = rcat.restaurant_no(+)
+                    AND rcat.restaurant_cat_id =  rcatname.restaurant_cat_id (+)
+		            AND (res.restaurant_name like '%' || #{keyword} || '%' 
+		                 or res.restaurant_district like '%' || #{keyword} || '%' 
+		                 or rcatname.restaurant_cat_name like '%' || #{keyword} || '%'  
+		                 or rtag.restaurant_tag like '%' || #{keyword} || '%' 
+		                 or rmenu.restaurant_menu_name like '%' || #{keyword} || '%' )
+			</if>
+			<if test="categoryId != null">
+				and res.restaurant_no in (select restaurant_no
+										from RESTAURANT_CAT
+										where RESTAURANT_CAT_ID = #{categoryId})
+			</if>
+			<if test='city != null and city != ""'>
+				and res.CITY_ID = #{city}
+			</if>
+			<if test="tags != null">
+				and res.restaurant_no (select restaurant_no
+										from restaurant_tag
+										where RESTAURANT_TAG in 
+										<foreach collection="tags" item="tag" open="(" close=")" separator=",">
+											#{tag}
+										</foreach>)
+			</if>
+		</where>
+		<choose>
+			<when test="sort == 'point'">
+				order by res.RESTAURANT_REVIEW_POINT desc
+			</when>
+			<when test="sort == 'count'">
+				order by res.RESTAURANT_REVIEW_COUNT desc
+			</when>
+			<when test="sort == 'like'">
+				order by res.RESTAURANT_LIKE_COUNT desc
+			</when>
+			<when test="sort == 'dist'">
+				order by distance asc
+			</when>
+		</choose>
+	</select>
+	
+	<!-- 찜하기 기능 관련 -->
+	<!-- int isExistUserLikeByRestaurantNo(LikeCriteria criteria); -->
+	<select id="isExistUserLikeByRestaurantNo" parameterType="kr.co.nc.criteria.LikeCriteria" resultType="int">
+		select count(*)
+		from user_restaurant_likes
+		where user_no = #{userNo}
+			and restaurant_no = #{id}
+	</select>
+	
+	<!-- void insertUserLikeByRestaurantNo(LikeCriteria criteria); -->
+	<insert id="insertUserLikeByRestaurantNo" parameterType="kr.co.nc.criteria.LikeCriteria">
+		insert into user_restaurant_likes (user_no, restaurant_no)
+		values (#{userNo}, #{id})
+	</insert>
+	
+	<!-- void deleteUserLikeByRestaurantNo(LikeCriteria criteria); -->
+	<delete id="deleteUserLikeByRestaurantNo" parameterType="kr.co.nc.criteria.LikeCriteria">
+		delete from user_restaurant_likes
+		where user_no = #{userNo}
+			and restaurant_no = #{id}
+	</delete>
+	
+	<!-- List<Accommodation> getAllLikedRestaurantByUserNo(int no); -->
+	<select id="getAllLikedRestaurantByUserNo" parameterType="int" resultMap="RestaurantResultMap">
+		select r.restaurant_no, r.restaurant_name, r.restaurant_district, r.restaurant_imgname,
+				r.restaurant_like_count, r.restaurant_review_point, r.restaurant_latitud, r.restaurant_longitude
+		from user_restaurant_likes l, restaurant r
+		where r.restaurant_delete = 'N'
+			and l.user_no = #{value}
+			and l.restaurant_no = r.restaurant_no
+	</select>
+	
+	<!-- void updateRestaurant(Restaurant restaurant); -->
+	<update id="updateRestaurant" parameterType="Restaurant">
+		update restaurant
+		set
+			restaurant_name = #{name},
+			restaurant_location = #{location},
+			restaurant_imgname = #{imgname},
+			restaurant_tel = #{tel},
+			restaurant_like_count = #{likeCount},
+			restaurant_review_count = #{reviewCount},
+			restaurant_review_point = #{reviewPoint},
+			restaurant_update_date = sysdate,
+			restaurant_latitud = #{latitud},
+			restaurant_longitude = #{longitude},
+			restaurant_delete = #{delete},
+			city_id = #{cityId},
+			restaurant_opening = #{opening},
+			restaurant_break_time = #{breakTime},
+			restaurant_close = #{close},
+			restaurant_district = #{district}
+		where restaurant_no = #{no}
+	</update>
+	
+	<!-- String getNameByNo(int restaurantNo); -->
+	<select id="getNameByNo" parameterType="int" resultType="string">
+		select restaurant_name
+		from restaurant
+		where restaurant_no = #{value}
+	</select>
+	
+</mapper>
