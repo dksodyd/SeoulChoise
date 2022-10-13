@@ -53,14 +53,22 @@ public class ReservationController {
 		
 		return "reservation/reservation";
 	}
-	
+	/*
+	 * 예약완료페이지 요청
+	 * 요청URI : /myreservation/complete
+	 * 뷰 페이지 : /WEB-INF/views/reservation.jsp
+	 */
 	@PostMapping("/reservation/complete")
 	public String paymentinfo(PaymentRequest paymentRequest, @LoginUser User user) throws IamportResponseException, IOException{
 		reservationService.insertReservate(paymentRequest, user);
 		
 		return "redirect:/user/information?cat=CAT_002";
 	}
-	
+	/*
+	 * 예약취소/환불 페이지 요청
+	 * 요청URI : /myreservation/refund
+	 * 뷰 페이지 : /WEB-INF/views/myreservation.jsp
+	 */
 	@GetMapping("/reservation/refund")
 	public String reservationRefund(@LoginUser User user, @RequestParam(name="reservationNo") String reservationNo) {
 		reservationService.updatePaymentStatus(reservationNo);
@@ -69,10 +77,9 @@ public class ReservationController {
 	}
 	
 	/*
-	 * 예약취소기능이 있는 나의 상세페이지 요청
+	 * 상세페이지 요청
 	 * 요청URI : /myreservation
 	 * 뷰 페이지 : /WEB-INF/views/myreservation.jsp
-	 * 마이페이지의 나의 상세예약정보페이지 요청 추후 마이페이지에 보낼예정
 	 */
 	@GetMapping(path = "/myreservation")
 	public String myReservation(@LoginUser User user ,@RequestParam(name="reservationNo")String reservationNo ,Model model) {
